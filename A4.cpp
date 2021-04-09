@@ -86,6 +86,27 @@ bool getSphereIntercept(vec3 & rayOrigin, vec3 & rayDirection, vec3 & c, double 
 	return true;
 }
 
+double calculateYPos(int frameNum) {
+	double dFrame = (double)frameNum;
+	double a = -222;
+	double v1 = 333;
+	if (frameNum < 73) {
+		return v1 * (dFrame/24) + (1/2)*a*(dFrame/24)*(dFrame/24);
+	} else if (frameNum < 137) {
+		v1 = 0.9 * v1;
+		dFrame = (double)(frameNum - 73);
+		return v1 * (dFrame/24) + (1/2)*a*(dFrame/24)*(dFrame/24);
+	} else if (frameNum < 196) {
+		v1 = 0.9*0.9 * v1;
+		dFrame = (double)(frameNum - 137);
+		return v1 * (dFrame/24) + (1/2)*a*(dFrame/24)*(dFrame/24);
+	} else {
+		v1 = 0.9 * 0.9 * 0.9 * v1;
+		dFrame = (double)(frameNum - 196);
+		return v1 * (dFrame/24) + (1/2)*a*(dFrame/24)*(dFrame/24);
+	}
+}
+
 void A4_Render(
 		// What to render  
 		SceneNode * root,
@@ -94,42 +115,45 @@ void A4_Render(
 		Image & image,
 
 		// Viewing parameters  
-		const glm::vec3 & eye,
+		glm::vec3 & eye,
 		const glm::vec3 & view,
 		const glm::vec3 & up,
 		double fovy,
 
 		// Lighting parameters  
 		const glm::vec3 & ambient,
-		const std::list<Light *> & lights
+		const std::list<Light *> & lights,
+		int frameNum
 ) {
-
+	std::cout << "Frame: " << frameNum << std::endl;
+	eye.z -= (double)frameNum;
+	eye.x += (double)frameNum;
   // Fill in raytracing code here...
 
-  std::cout << "F20: Calling A4_Render(\n" <<
-		  "\t" << *root <<
-          "\t" << "Image(width:" << image.width() << ", height:" << image.height() << ")\n"
-          "\t" << "eye:  " << glm::to_string(eye) << std::endl <<
-		  "\t" << "view: " << glm::to_string(view) << std::endl <<
-		  "\t" << "up:   " << glm::to_string(up) << std::endl <<
-		  "\t" << "fovy: " << fovy << std::endl <<
-          "\t" << "ambient: " << glm::to_string(ambient) << std::endl <<
-		  "\t" << "lights{" << std::endl;
+ //  std::cout << "F20: Calling A4_Render(\n" <<
+	// 	  "\t" << *root <<
+ //          "\t" << "Image(width:" << image.width() << ", height:" << image.height() << ")\n"
+ //          "\t" << "eye:  " << glm::to_string(eye) << std::endl <<
+	// 	  "\t" << "view: " << glm::to_string(view) << std::endl <<
+	// 	  "\t" << "up:   " << glm::to_string(up) << std::endl <<
+	// 	  "\t" << "fovy: " << fovy << std::endl <<
+ //          "\t" << "ambient: " << glm::to_string(ambient) << std::endl <<
+	// 	  "\t" << "lights{" << std::endl;
 
-	for(const Light * light : lights) {
-		std::cout << "\t\t" <<  *light << std::endl;
-	}
-	std::cout << "\t}" << std::endl;
-	std:: cout <<")" << std::endl;
+	// for(const Light * light : lights) {
+	// 	std::cout << "\t\t" <<  *light << std::endl;
+	// }
+	// std::cout << "\t}" << std::endl;
+	// std:: cout <<")" << std::endl;
 
 	size_t h = image.height();
 	size_t w = image.width();
 	double windowY = tan(radians(fovy/2)) * 2;
 	double windowX = windowY * (((double)w)/((double)h));
-	cout << "h: " << h << endl;
-	cout << "w: " << w << endl;
-	cout << "windowY: " << windowY << endl;
-	cout << "windowX: " << windowX << endl;
+	// cout << "h: " << h << endl;
+	// cout << "w: " << w << endl;
+	// cout << "windowY: " << windowY << endl;
+	// cout << "windowX: " << windowX << endl;
 	// transform pixel coordinate to world coords
 	// we use the algorithm from the supplemental information of lesson 20
 	mat4 T1 = glm::translate(mat4(1), vec3(-((double)(w))/2, -((double)(h))/2, 1.0)); // TODO: WHAT IS D AND HOW TO GET IT
@@ -139,9 +163,9 @@ void A4_Render(
 	vec3 uVec = normalize(glm::cross(up, wVec));
 	vec3 vVec = normalize(glm::cross(wVec, uVec));
 
-	cout << "wVec: " << wVec.x << ", " << wVec.y << ", " << wVec.z << endl;
-	cout << "uVec: " << uVec.x << ", " << uVec.y << ", " << uVec.z << endl;
-	cout << "vVec: " << vVec.x << ", " << vVec.y << ", " << vVec.z << endl;
+	// cout << "wVec: " << wVec.x << ", " << wVec.y << ", " << wVec.z << endl;
+	// cout << "uVec: " << uVec.x << ", " << uVec.y << ", " << uVec.z << endl;
+	// cout << "vVec: " << vVec.x << ", " << vVec.y << ", " << vVec.z << endl;
 
 	mat4 R3 = mat4(
 		uVec.x, uVec.y, uVec.z, 0,
@@ -153,10 +177,12 @@ void A4_Render(
 
 	mat4 T = T4*R3*S2*T1;
 
-	cout << R3[0][0] << ", " << R3[1][0] << ", " << R3[2][0] << ", " << R3[3][0] << endl;
-	cout << R3[0][1] << ", " << R3[1][1] << ", " << R3[2][1] << ", " << R3[3][1] << endl;
-	cout << R3[0][2] << ", " << R3[1][2] << ", " << R3[2][2] << ", " << R3[3][2] << endl;
-	cout << R3[0][3] << ", " << R3[1][3] << ", " << R3[2][3] << ", " << R3[3][3] << endl;
+	// cout << R3[0][0] << ", " << R3[1][0] << ", " << R3[2][0] << ", " << R3[3][0] << endl;
+	// cout << R3[0][1] << ", " << R3[1][1] << ", " << R3[2][1] << ", " << R3[3][1] << endl;
+	// cout << R3[0][2] << ", " << R3[1][2] << ", " << R3[2][2] << ", " << R3[3][2] << endl;
+	// cout << R3[0][3] << ", " << R3[1][3] << ", " << R3[2][3] << ", " << R3[3][3] << endl;
+	double dFrame = (double)frameNum;
+	vec3 ballTranslate = vec3(-dFrame, calculateYPos(frameNum), dFrame);
 
 	vec3 rayOrigin = eye;
 	vec3 colorForPixel;
@@ -170,7 +196,7 @@ void A4_Render(
 	// for all pixels
 	for (uint y = 0; y < h; ++y) {
 		if (y % step == 0) {
-			cout << "Progress: " << stepCounter << "%" << endl;
+			//cout << "Progress: " << stepCounter << "%" << endl;
 			stepCounter += 10;
 		}
 		for (uint x = 0; x < w; ++x) {

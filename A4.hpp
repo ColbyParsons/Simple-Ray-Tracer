@@ -17,14 +17,15 @@ void A4_Render(
 		Image & image,
 
 		// Viewing parameters
-		const glm::vec3 & eye,
+		glm::vec3 & eye,
 		const glm::vec3 & view,
 		const glm::vec3 & up,
 		double fovy,
 
 		// Lighting parameters
 		const glm::vec3 & ambient,
-		const std::list<Light *> & lights
+		const std::list<Light *> & lights,
+		int frameNum
 );
 
 bool getSphereIntercept(glm::vec3 & rayOrigin, glm::vec3 & rayDirection, glm::vec3 & c, double radius, double & result);

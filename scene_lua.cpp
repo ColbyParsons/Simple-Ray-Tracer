@@ -345,10 +345,13 @@ int gr_render_cmd(lua_State* L)
     lights.push_back(ldata->light);
     lua_pop(L, 1);
   }
-
-	Image im( width, height);
-	A4_Render(root->node, im, eye, view, up, fov, ambient, lights);
-    im.savePng( filename );
+  int numFrames = 3;
+  for (int i = 0; i < numFrames; i++) {
+  	Image im( width, height);
+  	A4_Render(root->node, im, eye, view, up, fov, ambient, lights, i);
+    std::string newFile = "frame" + std::to_string(i);
+      im.savePng( newFile );
+  }
 
 	return 0;
 }
