@@ -210,6 +210,10 @@ void A4_Render(
 						//cout << hit->m_name << endl;
 						material = static_cast<PhongMaterial *>(hit->m_material);
 
+						if (hit->m_primitive->colour == 1) {
+							material = new PhongMaterial(vec3(0.9,0.9,0.9), vec3(0.1,0.1,0.1), 10);
+						}
+
 						vec3 sum = vec3(0.0,0.0,0.0);
 						// l is light direction
 						// n is surface normal

@@ -12,6 +12,7 @@ using namespace glm;
 
 class Primitive {
 public:
+  int colour = 0;
   virtual ~Primitive();
   virtual bool check(vec3 & rayOrigin, vec3 & rayDirection, double & result) { return false; };
   virtual vec3 normal(vec3 & intersect) { return vec3(0.0,0.0,0.0); };
@@ -58,7 +59,6 @@ public:
     : m_pos(pos), m_size(size)
   {
   }
-  
   virtual ~NonhierBox();
   bool check(vec3 & rayOrigin, vec3 & rayDirection, double & result) override {
     vec3 i[12];
@@ -97,6 +97,31 @@ public:
       }  
     }
     result = minResult;
+    vec3 intersect = rayOrigin + ((float)minResult)*rayDirection;
+
+    // Texture mapping only on top side of cube
+    int brickHeight = 20;
+    int groutWidth = 4;
+    int brickwidth = 40;
+    int heightMod = (brickHeight + groutWidth);
+    int widthMod = (brickwidth + groutWidth);
+    // if top side
+    if (abs(m_pos.y + m_size - intersect.y) < 0.01) {
+      int val = abs(m_pos.x - intersect.x);
+      int val2 = abs(m_pos.z - intersect.z);
+      // used to alternate bricks
+      if (val % (2 * heightMod) >= heightMod) {
+        val2 += widthMod/2;
+      }
+      if (val % heightMod <= brickHeight && val % heightMod != 0 && val2 % widthMod <= brickwidth && val2 % widthMod != 0) {
+        colour = 0;
+      } else {
+        colour = 1;
+      }
+    } else {
+      colour = 0;
+    }
+
     return isHit;
   }
 
@@ -109,6 +134,49 @@ public:
     if (abs(m_pos.x + m_size - intersect.x) < 0.01) norm.x = 1;
     if (abs(m_pos.y + m_size - intersect.y) < 0.01) norm.y = 1;
     if (abs(m_pos.z + m_size - intersect.z) < 0.01) norm.z = 1;
+
+    // Bump mapping only on top side of cube
+    int brickHeight = 20;
+    int groutWidth = 4;
+    int brickwidth = 40;
+    int heightMod = (brickHeight + groutWidth);
+    int widthMod = (brickwidth + groutWidth);
+
+    if (norm.y == 1) {
+      int val = abs(m_pos.x - intersect.x);
+      if (val % heightMod == brickHeight) {
+        norm.x += 0.3;
+      } else if (val % heightMod == brickHeight + 1) {
+        norm.x += 0.15;
+      } else if (val % heightMod == brickHeight + 2) {
+        norm.x += 0.1;
+      } else if (val % heightMod == heightMod - 2) {
+        norm.x -= 0.1;
+      } else if (val % heightMod == heightMod - 1) {
+        norm.x -= 0.15;
+      } else if (val % heightMod == 0) {
+        norm.x -= 0.3;
+      }
+
+      int val2 = abs(m_pos.z - intersect.z);
+      // used to alternate bricks
+      if (val % (2 * heightMod) >= heightMod) {
+        val2 += widthMod/2;
+      }
+      if (val2 % widthMod == brickwidth) {
+        norm.z -= 0.3;
+      } else if (val2 % widthMod == brickwidth + 1) {
+        norm.z -= 0.15;
+      } else if (val2 % widthMod == brickwidth + 2) {
+        norm.z -= 0.1;
+      } else if (val2 % widthMod == widthMod - 2) {
+        norm.z += 0.1;
+      } else if (val2 % widthMod == widthMod - 1) {
+        norm.z += 0.15;
+      } else if (val2 % widthMod == widthMod) {
+        norm.z += 0.3;
+      }
+    }
 
     return normalize(norm);
   };
