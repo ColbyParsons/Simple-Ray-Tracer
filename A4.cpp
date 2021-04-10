@@ -91,19 +91,19 @@ double calculateYPos(int frameNum) {
 	double a = -222;
 	double v1 = 333;
 	if (frameNum < 73) {
-		return v1 * (dFrame/24) + (1/2)*a*(dFrame/24)*(dFrame/24);
+		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
 	} else if (frameNum < 137) {
 		v1 = 0.9 * v1;
-		dFrame = (double)(frameNum - 73);
-		return v1 * (dFrame/24) + (1/2)*a*(dFrame/24)*(dFrame/24);
+		dFrame = (double)(frameNum - 72);
+		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
 	} else if (frameNum < 196) {
 		v1 = 0.9*0.9 * v1;
 		dFrame = (double)(frameNum - 137);
-		return v1 * (dFrame/24) + (1/2)*a*(dFrame/24)*(dFrame/24);
+		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
 	} else {
 		v1 = 0.9 * 0.9 * 0.9 * v1;
 		dFrame = (double)(frameNum - 196);
-		return v1 * (dFrame/24) + (1/2)*a*(dFrame/24)*(dFrame/24);
+		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
 	}
 }
 
@@ -126,8 +126,10 @@ void A4_Render(
 		int frameNum
 ) {
 	std::cout << "Frame: " << frameNum << std::endl;
-	eye.z -= (double)frameNum;
-	eye.x += (double)frameNum;
+	
+	vec3 newEye = eye;
+	newEye.z -= (double)(frameNum/2);
+	newEye.x -= (double)frameNum;
   // Fill in raytracing code here...
 
  //  std::cout << "F20: Calling A4_Render(\n" <<
@@ -158,7 +160,7 @@ void A4_Render(
 	// we use the algorithm from the supplemental information of lesson 20
 	mat4 T1 = glm::translate(mat4(1), vec3(-((double)(w))/2, -((double)(h))/2, 1.0)); // TODO: WHAT IS D AND HOW TO GET IT
 	mat4 S2 = glm::scale(mat4(1), vec3(-windowX/w, -windowY/h, 1.0)); //TODO: figure out if w/h is different than nx/ny
-	vec3 wVec = normalize(view - eye); // TODO: figure out if LookFrom = eye and LookAt = view or not 
+	vec3 wVec = normalize(view - newEye); // TODO: figure out if LookFrom = eye and LookAt = view or not 
 														// ALSO WE MAY NEED TO NORMALIZE LOOKAT AND (MAYBE)LOOKFROM
 	vec3 uVec = normalize(glm::cross(up, wVec));
 	vec3 vVec = normalize(glm::cross(wVec, uVec));
@@ -173,7 +175,7 @@ void A4_Render(
 		wVec.x, wVec.y, wVec.z, 0,
 		0,      0,      0,      1
 	);
-	mat4 T4 = glm::translate(mat4(1), eye);
+	mat4 T4 = glm::translate(mat4(1), newEye);
 
 	mat4 T = T4*R3*S2*T1;
 
@@ -182,9 +184,17 @@ void A4_Render(
 	// cout << R3[0][2] << ", " << R3[1][2] << ", " << R3[2][2] << ", " << R3[3][2] << endl;
 	// cout << R3[0][3] << ", " << R3[1][3] << ", " << R3[2][3] << ", " << R3[3][3] << endl;
 	double dFrame = (double)frameNum;
-	vec3 ballTranslate = vec3(-dFrame, calculateYPos(frameNum), dFrame);
+	double yYy = calculateYPos(frameNum);
+	cout << yYy << endl;
+	vec3 ballTranslate = vec3(-dFrame, yYy , dFrame);
 
-	vec3 rayOrigin = eye;
+	for (SceneNode * child : root->children) {
+		if (child->m_nodeType != NodeType::GeometryNode) continue;
+		GeometryNode * geometryNode = static_cast<GeometryNode *>(child);
+		geometryNode->m_primitive->update(ballTranslate);
+	}
+
+	vec3 rayOrigin = newEye;
 	vec3 colorForPixel;
 	double sampleStartX;
 	double sampleStartY;

@@ -15,6 +15,7 @@ public:
   int colour = 0;
   virtual ~Primitive();
   virtual bool check(vec3 & rayOrigin, vec3 & rayDirection, double & result) { return false; };
+  virtual void update(vec3 & transform) { };
   virtual vec3 normal(vec3 & intersect) { return vec3(0.0,0.0,0.0); };
 };
 
@@ -37,7 +38,7 @@ public:
 class NonhierSphere : public Primitive {
 public:
   NonhierSphere(const glm::vec3& pos, double radius)
-    : m_pos(pos), m_radius(radius)
+    : m_pos(pos), m_radius(radius), base_m_pos(pos)
   {
   }
   virtual ~NonhierSphere();
@@ -46,11 +47,18 @@ public:
     return ret;
   }
 
+  void update(vec3 & transform) override { 
+    // cout << m_pos.x << ", " << m_pos.y << ", " << m_pos.z << endl;
+    m_pos = base_m_pos + transform;
+    // cout << m_pos.x << ", " << m_pos.y << ", " << m_pos.z << endl;
+  };
+
   vec3 normal(vec3 & intersect) override { return normalize(intersect - m_pos); };
 
 private:
   glm::vec3 m_pos;
   double m_radius;
+  glm::vec3 base_m_pos;
 };
 
 class NonhierBox : public Primitive {
