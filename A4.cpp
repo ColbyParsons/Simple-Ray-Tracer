@@ -4,13 +4,17 @@
 #include "Primitive.hpp"
 #include "GeometryNode.hpp"
 #include "PhongMaterial.hpp"
+#include <stdlib.h>
+#include <algorithm>
 
 #include "A4.hpp"
 
 using namespace glm;
 using namespace std;
 
-vec3 getColor(uint x, uint y, size_t w, size_t h) {
+size_t pixels[40];
+
+vec3 getColor(uint x, uint y, size_t w, size_t h, int frame) {
 	double dx = x;
 	double dy = y;
 	double dw = w;
@@ -18,7 +22,26 @@ vec3 getColor(uint x, uint y, size_t w, size_t h) {
 	double r = (dx/dw)/3;
 	double g = (dy/dh)/3;
 	double b = (dx*dy)/(dw*dh);
+	int topIndex = 20;
+	if (frame < 20) topIndex = frame + 1;
+	for (int i = 0; i < topIndex; i++) {
+		if ((x <= pixels[2*i + 1] + 2 && x >= pixels[2*i + 1] - 2) && (y <= pixels[2*i] + 2 && y >= pixels[2*i] - 2)) {
+			if (!((x == pixels[2*i + 1] + 1 || x == pixels[2*i + 1] - 1) && (y == pixels[2*i] + 1 || y == pixels[2*i] - 1))) {
+				if ((x == pixels[2*i + 1] + 2 || x == pixels[2*i + 1] - 2 || x == pixels[2*i + 1] + 1 || x == pixels[2*i + 1] - 1) 
+				&& (y == pixels[2*i] + 2 || y == pixels[2*i] - 2 || y == pixels[2*i] + 1 || y == pixels[2*i] - 1)) return vec3(r,g,b);
+			}
+			if (i >= 10) {
+				double d = 1.0 - 0.1*(i - 10);
+				return vec3(std::max(d,r),std::max(d,g),std::max(d,b));
+			} else {
+				double d = 0.1*i;
+				return vec3(std::max(r,d), std::max(g,d), std::max(b,d));
+			}
+			
+		}
+	}
 	return vec3(r,g,b);
+	
 }
 
 vec3 getTriangleIntercept(vec3 & rayOrigin, vec3 & rayDirection, vec3 & p1, vec3 & p2, vec3 & p3) {
@@ -100,9 +123,21 @@ double calculateYPos(int frameNum) {
 		v1 = 0.9*0.9 * v1;
 		dFrame = (double)(frameNum - 137);
 		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
-	} else {
+	} else if (frameNum < 248) {
 		v1 = 0.9 * 0.9 * 0.9 * v1;
 		dFrame = (double)(frameNum - 196);
+		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
+	} else if (frameNum < 296) {
+		v1 = 0.9 * 0.9 * 0.9 * 0.9 * v1;
+		dFrame = (double)(frameNum - 248);
+		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
+	} else if (frameNum < 339) {
+		v1 = /*0.9 * 0.9 * 0.9 * 0.9 * 0.9*/ 0.59 * v1;
+		dFrame = (double)(frameNum - 296);
+		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
+	} else {
+		v1 = /*0.9 * 0.9 * 0.9 * 0.9 * 0.9 8 0.9*/ 0.53 * v1;
+		dFrame = (double)(frameNum - 339);
 		return (24 * 2 * v1 * dFrame + a*dFrame*dFrame)/(24 * 24 * 2);
 	}
 }
@@ -130,6 +165,10 @@ void A4_Render(
 	vec3 newEye = eye;
 	newEye.z -= (double)(frameNum/2);
 	newEye.x -= (double)frameNum;
+	vec3 newView = view;
+	newView.z += (double)frameNum;
+	newView.x += (double)frameNum;
+	
   // Fill in raytracing code here...
 
  //  std::cout << "F20: Calling A4_Render(\n" <<
@@ -152,6 +191,16 @@ void A4_Render(
 	size_t w = image.width();
 	double windowY = tan(radians(fovy/2)) * 2;
 	double windowX = windowY * (((double)w)/((double)h));
+	int topIndex = 20;
+	if (frameNum < 20) topIndex = frameNum + 1;
+	for (int i = 0; i < topIndex; i++) {
+		srand(frameNum - i);
+		pixels[2*i] = rand() % h;
+		pixels[2*i + 1] = rand() % w;
+		if (pixels[2*i] <= 1) pixels[2*i] += 2;
+		if (pixels[2*i + 1] <= 1) pixels[2*i + 1] += 2;
+	}
+
 	// cout << "h: " << h << endl;
 	// cout << "w: " << w << endl;
 	// cout << "windowY: " << windowY << endl;
@@ -160,7 +209,7 @@ void A4_Render(
 	// we use the algorithm from the supplemental information of lesson 20
 	mat4 T1 = glm::translate(mat4(1), vec3(-((double)(w))/2, -((double)(h))/2, 1.0)); // TODO: WHAT IS D AND HOW TO GET IT
 	mat4 S2 = glm::scale(mat4(1), vec3(-windowX/w, -windowY/h, 1.0)); //TODO: figure out if w/h is different than nx/ny
-	vec3 wVec = normalize(view - newEye); // TODO: figure out if LookFrom = eye and LookAt = view or not 
+	vec3 wVec = normalize(newView - newEye); // TODO: figure out if LookFrom = eye and LookAt = view or not 
 														// ALSO WE MAY NEED TO NORMALIZE LOOKAT AND (MAYBE)LOOKFROM
 	vec3 uVec = normalize(glm::cross(up, wVec));
 	vec3 vVec = normalize(glm::cross(wVec, uVec));
@@ -185,7 +234,7 @@ void A4_Render(
 	// cout << R3[0][3] << ", " << R3[1][3] << ", " << R3[2][3] << ", " << R3[3][3] << endl;
 	double dFrame = (double)frameNum;
 	double yYy = calculateYPos(frameNum);
-	cout << yYy << endl;
+	//cout << yYy << endl;
 	vec3 ballTranslate = vec3(-dFrame, yYy , dFrame);
 
 	for (SceneNode * child : root->children) {
@@ -222,7 +271,7 @@ void A4_Render(
 					vec3 threeCoord = vec3(worldCoord.x, worldCoord.y, worldCoord.z);
 					vec3 rayDirection = threeCoord - rayOrigin;
 					//cout << "dir: " << rayDirection.x << ", " << rayDirection.y << ", " << rayDirection.z << endl;
-					colours[colorIndex] = getColor(x, y, w, h);
+					colours[colorIndex] = getColor(x, y, w, h, frameNum);
 
 					// now we compute intersections
 					double minResult;
