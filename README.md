@@ -1,4 +1,6 @@
 A simple ray tracer implemented in C++.
+Uses the Blinn-Phong lighting model.
+Scene is described using Lua.
 
 
 COMPILATION:
