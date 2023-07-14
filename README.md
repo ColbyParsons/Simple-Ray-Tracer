@@ -1,14 +1,14 @@
-This is a simple ray tracer implemented as part of an undergraduate course I took.
+A simple ray tracer implemented in C++.
 
 
 COMPILATION:
-	My code for assignment 4 can be compiled and run in the same way as how the code was given to us.
-	i.e.
 		cd A4
 		premake4 gmake
 		make
 		cd Assets
 		../A4 sample.lua
+
+Made as an assignment submission for a final year undergraduate graphics course.
 
 Manual:
 
